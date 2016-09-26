@@ -12,10 +12,11 @@
 #include "comon2.h"
 #include "cmd.h"
 #include "extract.h"
-int cmd(char *name[],int bg,int lmt,char pres_dir[])
+#include "pipe.h"
+int cmd(char *name[],char *var[],int bg,int lmt,int mxm,char pres_dir[],int idx)
 {
 	pid_t pid;
-	int flg,l1,i,flg_cd,inp_file,out_file,in_flg=0,out_flg=0;
+	int flg,l1,i,flg_cd,inp_file,out_file,in_flg=0,out_flg=0,no_pip=0;
 	if(name[1]!=NULL){
 		l1=strlen(name[1]);
 	}
@@ -32,8 +33,9 @@ int cmd(char *name[],int bg,int lmt,char pres_dir[])
                 return 0;
             in_flg = 1;
             name[i] = '\0';
+            close(inp_file);
         }
-        else if(name[i][0]=='>')
+        else if(name[i][0]=='>') //appending not implemented
         {
             // printf("%s\n",name[i+1]);
             out_file = open(name[i+1],O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
@@ -41,8 +43,19 @@ int cmd(char *name[],int bg,int lmt,char pres_dir[])
                 return 0;
             out_flg = 1;
             name[i] = '\0';
+            close(out_file);
+        }
+        else if(name[i][0]=='|')
+        {
+            no_pip++;
         }
     }
+    if(no_pip != 0)
+    {
+        pip(no_pip,name,var,lmt,mxm,idx);
+    }
+    else
+    {
 	pid=fork();
 	if(pid==0)
 	{
@@ -133,8 +146,7 @@ int cmd(char *name[],int bg,int lmt,char pres_dir[])
 			fprintf(stderr,"%s: Command not found\n",name[0]);
 			// printf("%s: Command not found\n",name[0]);
 		}
-        close(inp_file);
-        close(out_file);
+
     	}
     	else if(pid > 0 && bg!=1)
     	{
@@ -151,4 +163,5 @@ int cmd(char *name[],int bg,int lmt,char pres_dir[])
         // close(inp_file);
         // close(out_file);
 	return 3;
+    }
 }

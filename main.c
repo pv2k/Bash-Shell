@@ -12,6 +12,7 @@
 #include "abo_chil.h"
 #include "comon2.h"
 #include "comon1.h"
+#include "pipe.h"
 sigjmp_buf env;
 char org_dir[1000];
 int main()
@@ -20,12 +21,12 @@ int main()
 	int flg=0,bg;
 	cwd=getcwd(dir,sizeof(dir));        // use exits
 	strcpy(org_dir,dir);
-	usr_name = getenv("USER");    
+	usr_name = getenv("USER");
 	gethostname(sys_name,30);
 	// printf("<Zoro@UBUNTU:~>");
 	while(1)
 	{
-		char str[100],*token,*tok,*name[100],concat[100],*var[100];
+		char str[100],*token,*tok,*name[100],concat[100],*var[100],*var1[100];
 		int i=0,j,res;
 		bg=0;
 		if(strcmp(dir,org_dir)==0)
@@ -41,14 +42,16 @@ int main()
 		while(tok!=NULL)
 		{
 			var[i]=tok;
+            var1[i] = tok;
 			tok = strtok(NULL,";");
 			i++;
 		}
-		var[i]=NULL;
+		var[i]=NULL;var1[i]=NULL;
+        printf("%s\n",var[0]);
 		for(int x=0;x<i;x++)
 		{
 			j=0;
-			token = strtok(var[x]," ");
+			token = strtok(var1[x]," ");
 			while(token!=NULL)
 			{
 				name[j] = token;
@@ -58,11 +61,12 @@ int main()
 			name[j] = NULL;
 			int ox = strlen(name[j-1]);
 			cwd=getcwd(dir,sizeof(dir));
+            printf("%s\n",var[0]);
 			if(name[j-1][0]=='&')
 			{
 				bg = 1;
 				name[j-1] = NULL;
-				res=cmd(name,bg,j,dir);
+				res=cmd(name,var,bg,j,i,dir,x);
 				struct sigaction sa;
 				sigfillset(&sa.sa_mask);
 				sa.sa_handler=(void *)abo_chil;
@@ -74,10 +78,10 @@ int main()
 			{
 				bg = 1;
 				name[j-1][ox-1]='\0';
-				res=cmd(name,bg,j,dir);
+				res=cmd(name,var,bg,j,i,dir,x);
 			}
 			else
-				res=cmd(name,bg,j,dir);
+				res=cmd(name,var,bg,j,i,dir,x);
 			if(res==0)
 				return 0;
 			cwd=getcwd(dir,sizeof(dir));
